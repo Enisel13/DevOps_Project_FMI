@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
@@ -26,11 +26,16 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        pip install pytest bandit flake8
+
+    - name: Run Linter
+      run: flake8 src tests
 
     - name: Run Unit Tests
       run: pytest
 
     - name: Run SAST (Bandit)
-      run: |
-        pip install bandit
-        bandit -r src
+      run: bandit -r src
+
+    - name: Build Docker Image
+      run: docker build -t devops_project_flask:0.0.1 .
