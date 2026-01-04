@@ -5,3 +5,4 @@ def test_health():
     client = app.test_client()
     response = client.get("/health")
     assert response.data == b"OK"
+    
