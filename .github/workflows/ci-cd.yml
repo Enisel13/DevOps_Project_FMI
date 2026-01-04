@@ -41,6 +41,6 @@ jobs:
       run: docker build -t devops_project_flask:0.0.1 .
 
     - name: Deploy to Kubernetes
-      run: |
-        kubectl apply -f k8s-deployment.yaml
+      run: kubectl apply -f k8s/deployment.yaml
+    
 
