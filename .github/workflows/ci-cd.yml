@@ -40,8 +40,8 @@ jobs:
     - name: Build Docker Image
       run: docker build -t devops_project_flask:0.0.1 .
 
-    - name: Deploy to Kubernetes
-      run: kubectl apply --validate=false -f k8s/deployment.yaml
+    #- name: Deploy to Kubernetes
+      #run: kubectl apply --validate=false -f k8s/deployment.yaml
     
     
 
