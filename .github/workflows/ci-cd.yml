@@ -83,7 +83,7 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          IMAGE_TAG=eniselkunch/devops-project:latest
+          IMAGE_TAG=eniselkunch/devops-project:${GITHUB_SHA}
           echo "Building image with tag $IMAGE_TAG"
           docker build -t $IMAGE_TAG .
           docker push $IMAGE_TAG
@@ -120,8 +120,9 @@ jobs:
       # Deploy to Kubernetes
       - name: Deploy to GKE
         run: |
-          kubectl apply -f k8s/  
-          kubectl rollout restart deployment flask-app-deployment
+          helm upgrade --install flask-app ./flask-app --namespace default --set image.tag=$IMAGE_TAG
+
+         
 
 
 

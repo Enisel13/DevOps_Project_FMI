@@ -1,0 +1,12 @@
+replicaCount: 3
+
+image:
+  repository: eniselkunch/devops-project
+  tag: latest      # default, will override dynamically
+  pullPolicy: Always
+
+service:
+  type: LoadBalancer
+  port: 80
+
+containerPort: 5001
