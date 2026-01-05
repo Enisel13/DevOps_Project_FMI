@@ -5,7 +5,7 @@ metadata:
 spec:
   type: LoadBalancer
   selector:
-    app: devops-project
+    app: flask-app
   ports:
     - protocol: TCP
       port: 80         # external port
