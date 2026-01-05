@@ -75,12 +75,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Docker image
+      - name: Build and push Docker image
         run: |
-          IMAGE_TAG=devops_project_flask:${{ github.run_number }}
+          IMAGE_TAG=eniselkunch/devops-project:${{ github.run_number }}
           echo "Building image with tag $IMAGE_TAG"
           docker build -t $IMAGE_TAG .
-
+          docker push $IMAGE_TAG
 
       #- name: Deploy to Kubernetes
         #run: kubectl apply --validate=false -f k8s/deployment.yaml
