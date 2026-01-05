@@ -1,5 +1,7 @@
 name: CI/CD Pipeline
 
+env:
+  IMAGE_TAG: eniselkunch/devops-project:${{ github.sha }}
 on:
   push:
     branches:
@@ -83,7 +85,6 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          IMAGE_TAG=eniselkunch/devops-project:${GITHUB_SHA}
           echo "Building image with tag $IMAGE_TAG"
           docker build -t $IMAGE_TAG .
           docker push $IMAGE_TAG
@@ -121,6 +122,7 @@ jobs:
       - name: Deploy to GKE
         run: |
           helm upgrade --install flask-app ./flask-app --namespace default --set image.tag=$IMAGE_TAG
+          
 
          
 

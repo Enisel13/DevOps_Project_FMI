@@ -2,7 +2,7 @@ replicaCount: 3
 
 image:
   repository: eniselkunch/devops-project
-  tag: latest      # default, will override dynamically
+  tag: ""      # default, will override dynamically
   pullPolicy: Always
 
 service:
