@@ -92,6 +92,7 @@ jobs:
         #run: kubectl apply --validate=false -f k8s/deployment.yaml
     
   deploy:
+    needs: docker
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -112,7 +113,7 @@ jobs:
       # Get credentials for your GKE cluster
       - name: Get GKE credentials
         run: |
-           gcloud container clusters get-credentials devopsproject-cluster-1 --zone us-central1-a
+           gcloud container clusters get-credentials devopsproject-cluster-1 --zone us-central1
 
       # Deploy to Kubernetes
       - name: Deploy to GKE
