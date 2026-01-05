@@ -109,6 +109,8 @@ jobs:
         with:
           project_id: cybernetic-tide-474909-n0
           version: 'latest'
+          install_components: gke-gcloud-auth-plugin
+
 
       # Get credentials for your GKE cluster
       - name: Get GKE credentials
