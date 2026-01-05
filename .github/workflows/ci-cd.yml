@@ -112,7 +112,7 @@ jobs:
       # Get credentials for your GKE cluster
       - name: Get GKE credentials
         run: |
-          gcloud container clusters get-credentials <CLUSTER_NAME> --zone <ZONE>
+           gcloud container clusters get-credentials devopsproject-cluster-1 --zone us-central1-a
 
       # Deploy to Kubernetes
       - name: Deploy to GKE
