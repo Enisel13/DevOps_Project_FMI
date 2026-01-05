@@ -121,5 +121,7 @@ jobs:
       - name: Deploy to GKE
         run: |
           kubectl apply -f k8s/  
+          kubectl rollout restart deployment flask-app-deployment
+
 
 
