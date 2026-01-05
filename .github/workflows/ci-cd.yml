@@ -1,7 +1,5 @@
 name: CI/CD Pipeline
 
-env:
-  IMAGE_TAG: eniselkunch/devops-project:${{ github.sha }}
 on:
   push:
     branches:
@@ -11,11 +9,13 @@ on:
     branches:
       - main
 
+env:
+  IMAGE_TAG: eniselkunch/devops-project:${{ github.sha }}
+
 jobs:
   lint:
     name: Lint (Flake8)
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -31,7 +31,7 @@ jobs:
       # - name: Run flake8
       #   run: flake8 src
 
-# after the build is done 
+  # after the build is done 
   # test:
     # name: Unit Tests (Pytest)
     # runs-on: ubuntu-latest
@@ -51,14 +51,11 @@ jobs:
     #       pip install pytest
 
     #   - name: Run tests
-    #     run: pytest
-
-
+    #     run: pytest  
   security:
     name: Security Scan (Bandit)
     runs-on: ubuntu-latest
-    #needs: test
-
+    #needs: lint
     steps:
       - uses: actions/checkout@v4
 
@@ -68,12 +65,12 @@ jobs:
       - name: Run Bandit
         run: bandit -r src
 
-
   docker:
     name: Build Docker Image
     runs-on: ubuntu-latest
     needs: security
-
+    outputs:
+      image-tag: ${{ steps.set-tag.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
 
@@ -83,22 +80,25 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Set image tag
+        id: set-tag
+        run: |
+          echo "::set-output name=tag::${IMAGE_TAG}"
+
       - name: Build and push Docker image
         run: |
           echo "Building image with tag $IMAGE_TAG"
           docker build -t $IMAGE_TAG .
           docker push $IMAGE_TAG
 
-      #- name: Deploy to Kubernetes
-        #run: kubectl apply --validate=false -f k8s/deployment.yaml
-    
   deploy:
-    needs: docker
+    name: Deploy to GKE via Helm
     runs-on: ubuntu-latest
+    needs: docker
     steps:
       - uses: actions/checkout@v3
 
-      # Authenticate to GCP using the service account JSON
+      # Authenticate to GCP
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v1
         with:
@@ -112,19 +112,14 @@ jobs:
           version: 'latest'
           install_components: gke-gcloud-auth-plugin
 
-
-      # Get credentials for your GKE cluster
+      # Get GKE credentials
       - name: Get GKE credentials
         run: |
-           gcloud container clusters get-credentials devopsproject-cluster-1 --zone us-central1
+          gcloud container clusters get-credentials devopsproject-cluster-1 --zone us-central1
 
-      # Deploy to Kubernetes
+      # Deploy via Helm with dynamic image tag
       - name: Deploy to GKE
         run: |
-          helm upgrade --install flask-app ./flask-app --namespace default --set image.tag=$IMAGE_TAG
-          
-
-         
-
-
-
+          helm upgrade --install flask-app ./flask-app \
+            --namespace default \
+            --set image.tag=${{ needs.docker.outputs.image-tag }}
