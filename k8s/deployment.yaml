@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: flask-app
-          image: devops_project_flask:0.0.1
+          image: eniselkunch/devops-project:latest
           ports:
             - containerPort: 5001
 ---
