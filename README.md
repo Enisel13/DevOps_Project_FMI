@@ -174,11 +174,15 @@ This project demonstrates a T-shaped DevOps approach:
 
 This project supports automatic deployment to a GKE cluster from GitHub Actions using a Google Cloud service account JSON key.
 Created manually GKE Kubernetes cluster from the UI аnd made sure that I have gcloud CLI installed locally or Cloud Shell
+
 1. **Create a Google Cloud service account**
+```bash
 gcloud iam service-accounts create github-deployer \
   --display-name="GitHub Actions Deploy to GKE"
+```
 
 2. **Grant it permissions**
+```bash
 PROJECT_ID=$(gcloud config get-value project)
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
@@ -188,13 +192,16 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:github-deployer@$PROJECT_ID.iam.gserviceaccount.com" \
   --role="roles/storage.admin"
-
+```
 3. **Create a JSON key**
+```bash
 gcloud iam service-accounts keys create key.json \
   --iam-account=github-deployer@$PROJECT_ID.iam.gserviceaccount.com
+```
 Save the file key.json.
 
 4. **Add the key to GitHub secrets**
+
 GitHub → Repository Settings → Secrets and variables → Actions → New secret
 
 
