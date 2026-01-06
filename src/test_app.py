@@ -15,7 +15,7 @@ class TestApp(unittest.TestCase):
     def test_health(self):
         response = self.client.get("/health")
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b"OK Super", response.data)
+        self.assertIn(b"OK Great", response.data)
 
 if __name__ == "__main__":
     unittest.main()
