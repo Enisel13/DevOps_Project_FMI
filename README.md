@@ -29,7 +29,6 @@ The backend Flask app has 3 endpoints:
 
 ---
 
-## Technical Stack
 
 ## Technical Stack
 
@@ -124,53 +123,6 @@ kubectl get service devops-project-svc
 kubectl port-forward service/devops-project-svc 8080:80
 ```
 
-### Deploy and Verify on GKE (Public Cloud)
-
-When the GitHub Actions pipeline runs the **Deploy job** to GKE, it automatically:
-
-1. Replaces the Docker image placeholder in `deployment.yaml` with the **dynamic tag** generated from the Git commit SHA.  
-2. Applies the Kubernetes manifests (`deployment.yaml` and `service.yaml`) to the GKE cluster.  
-
-After deployment, the pipeline runs **Verify deployment** commands:
-
-```bash
-kubectl get deployment flask-app-deployment
-kubectl get pods -l app=flask-app
-kubectl get service devops-project-svc
-```
-
-After deploying to GKE, the pipeline provides a verification summary:
-```text
-=== Deployment Details ===
-NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
-flask-app-deployment   2/2     2            2           79s
-
-=== Image being used ===
-eniselkunch/devops-project:38d9f58146b75dc2385992ee7ae5b7a3108ff249
-
-=== Pods ===
-NAME                                    IMAGE                                                                 STATUS
-flask-app-deployment-759dbcb94c-5cz2c   eniselkunch/devops-project:38d9f58146b75dc2385992ee7ae5b7a3108ff249   Running
-flask-app-deployment-759dbcb94c-xr2xg   eniselkunch/devops-project:38d9f58146b75dc2385992ee7ae5b7a3108ff249   Running
-
-=== Service ===
-NAME                 TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
-devops-project-svc   LoadBalancer   34.118.225.68   34.60.18.8    80:30991/TCP   15h
-```
-
-**Explanation:**
-
-- The Deployment shows that 2 replicas of the Flask app are running successfully.
-- The Image being used is the exact Docker image built from the Git commit SHA, ensuring traceability.
-- The Pods section confirms that all pods are running the correct image.
-- The Service section provides a public IP (EXTERNAL-IP) which can be opened in a browser to access the live application.
-
-```bash
-http://34.60.18.8
-```
-This demonstrates the full CI/CD workflow: code is committed → Docker image is built with dynamic tag → image is deployed to GKE → deployment is verified → application is accessible publicly.
-
-
 ### CI/CD Pipeline (GitHub Actions)
 
 **Pipeline location:** `.github/workflows/ci-cd.yaml`
@@ -218,6 +170,71 @@ This project demonstrates a T-shaped DevOps approach:
     - Deep dive: Security scanning with Bandit integrated into the pipeline
 
 
+### Deploy and Verify on GKE (Public Cloud)
+
+When the GitHub Actions pipeline runs the **Deploy job** to GKE, it automatically:
+
+1. Replaces the Docker image placeholder in `deployment.yaml` with the **dynamic tag** generated from the Git commit SHA.  
+2. Applies the Kubernetes manifests (`deployment.yaml` and `service.yaml`) to the GKE cluster.  
+
+After deployment, the pipeline runs **Verify deployment** commands:
+
+```bash
+kubectl get deployment flask-app-deployment
+kubectl get pods -l app=flask-app
+kubectl get service devops-project-svc
+```
+
+After deploying to GKE, the pipeline provides a verification summary:
+```text
+=== Deployment Details ===
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+flask-app-deployment   2/2     2            2           79s
+
+=== Image being used ===
+eniselkunch/devops-project:38d9f58146b75dc2385992ee7ae5b7a3108ff249
+
+=== Pods ===
+NAME                                    IMAGE                                                                 STATUS
+flask-app-deployment-759dbcb94c-5cz2c   eniselkunch/devops-project:38d9f58146b75dc2385992ee7ae5b7a3108ff249   Running
+flask-app-deployment-759dbcb94c-xr2xg   eniselkunch/devops-project:38d9f58146b75dc2385992ee7ae5b7a3108ff249   Running
+
+=== Service ===
+NAME                 TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+devops-project-svc   LoadBalancer   34.118.225.68   34.60.18.8    80:30991/TCP   15h
+```
+
+**Explanation:**
+
+- The Deployment shows that 2 replicas of the Flask app are running successfully.
+- The Image being used is the exact Docker image built from the Git commit SHA, ensuring traceability.
+- The Pods section confirms that all pods are running the correct image.
+- The Service section provides a public IP (EXTERNAL-IP) which can be opened in a browser to access the live application.
+
+```bash
+http://34.60.18.8
+```
+This demonstrates the full CI/CD workflow: code is committed → Docker image is built with dynamic tag → image is deployed to GKE → deployment is verified → application is accessible publicly.
+
+## Installation / Quick Start
+This section describes how to run the application **locally** using Docker.
+
+### Clone the repository:
+```bash
+git clone https://github.com/Enisel13/DevOps_Project_FMI 
+cd DevOps_Project_FMI 
+```
+
+Build and run locally with Docker
+```bash
+docker build -t flask-app:latest .
+docker run -d -p 5001:5001 flask-app:latest
+```
+
+Access the application
+```bash
+http://localhost:5001
+```
 
 ## Components Used
 This project demonstrates the usage of the following DevOps components and practices as required by the course:
@@ -230,6 +247,18 @@ This project demonstrates the usage of the following DevOps components and pract
 
 - ✅ **Continuous Integration (CI)**  
   CI pipelines triggered on every push and pull request.
+  On every push or pull request, the pipeline automatically:
+  - Runs unit tests
+  - Performs static code analysis
+  - Executes security scans  
+  This ensures early detection of errors and vulnerabilities.
+
+- ✅ **Continuous Delivery (CD)**  
+    After successful CI checks, the application is automatically:
+    - Containerized
+    - Published to Docker Hub
+    - Deployed to a Kubernetes cluster on GKE  
+    without manual intervention.
 
 - ✅ **Security (SAST)**  
   Static Application Security Testing integrated in the CI pipeline.
@@ -243,17 +272,4 @@ This project demonstrates the usage of the following DevOps components and pract
 - ✅ **Public Cloud (Google Cloud Platform)**  
   Infrastructure deployed on Google Cloud Platform (GCP).
 
-- ✅ **Infrastructure as Code (Helm)**  
-  Kubernetes resources managed using Helm charts.
-
 ---
-
-# Components I have 
-1. Source control
-2. Building Pipelines
-3. Continuous Integration
-4. Continuous Delivery
-5. Security 
-6. Docker 
-7. K8s 
-8. Public Cloud (GCP)
