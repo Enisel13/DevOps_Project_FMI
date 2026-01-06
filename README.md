@@ -202,14 +202,14 @@ Save the file key.json.
 
 4. **Add the key to GitHub secrets**
 
-GitHub → Repository Settings → Secrets and variables → Actions → New secret
+**GitHub** → **Repository Settings** → **Secrets and variables** → **Actions → New secret**
 
 
 Name: GCP_SA_KEY
 Value: (paste entire contents of key.json)
 Then delete key.json locally.
 
-5. Add GitHub Actions workflow
+5. **Add GitHub Actions workflow**
 
 These are the steps I did manually, but they could also be done using Terraform (Infrastructure as Code).
 
