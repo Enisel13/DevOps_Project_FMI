@@ -14,19 +14,22 @@ The backend Flask app has 3 endpoints:
 
 ---
 
-## Project Structure
-.
-├── src/
-│ ├── app.py # Flask application
-│ └── test_app.py # Unit tests
-├── k8s/
-│ ├── deployment.yaml # Kubernetes Deployment manifest
-│ └── service.yaml # Kubernetes Service manifest
-├── Dockerfile # Container definition
-├── requirements.txt # Python dependencies
-└── .github/
-└── workflows/
-└── ci-cd.yaml # GitHub Actions CI/CD pipeline
+# Project Structure
+
+- **src/**
+    - `app.py` – Flask application
+    - `test_app.py` – Unit tests
+- **k8s/**
+    - `deployment.yaml` – Kubernetes Deployment manifest
+    - `service.yaml` – Kubernetes Service manifest
+- `Dockerfile` – Container definition
+- `requirements.txt` – Python dependencies
+- **.github/workflows/**
+    - `ci-cd.yaml` – GitHub Actions CI/CD pipeline
+
+---
+
+## Technical Stack
 
 ## Technical Stack
 
@@ -122,7 +125,6 @@ kubectl port-forward service/devops-project-svc 8080:80
 ```
 
 ### Deploy and Verify on GKE (Public Cloud)
-### Deploy and Verify on GKE (Public Cloud)
 
 When the GitHub Actions pipeline runs the **Deploy job** to GKE, it automatically:
 
@@ -214,12 +216,6 @@ Security is integrated into the pipeline:
 This project demonstrates a T-shaped DevOps approach:
     - Broad coverage: Source control, CI/CD, Docker, Kubernetes, GCP deployment
     - Deep dive: Security scanning with Bandit integrated into the pipeline
-
-
-
-
-
-
 
 
 
