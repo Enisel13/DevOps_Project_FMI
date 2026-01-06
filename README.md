@@ -1,7 +1,7 @@
 # DevOps Project – FMI
 Final project for the DevOps course at the Faculty of Mathematics and Informatics.
 
-This project demonstrates a complete CI/CD pipeline for a minimal Flask application, deployed automatically to Google Kubernetes Engine (GKE) using Docker, GitHub Actions, and Helm.
+This project demonstrates a complete CI/CD pipeline for a minimal Flask application, deployed automatically to Google Kubernetes Engine (GKE) using Docker and GitHub Actions.
 
 The goal of the project is to showcase modern DevOps practices including source control, continuous integration, security scanning, containerization, Kubernetes deployment, and infrastructure management in the public cloud.
 
@@ -170,7 +170,48 @@ This project demonstrates a T-shaped DevOps approach:
     - Deep dive: Security scanning with Bandit integrated into the pipeline
 
 
-### Deploy and Verify on GKE (Public Cloud)
+## Deploy and Verify on GKE (Public Cloud) ##
+
+This project supports automatic deployment to a GKE cluster from GitHub Actions using a Google Cloud service account JSON key.
+Created manually GKE Kubernetes cluster from the UI аnd made sure that I have gcloud CLI installed locally or Cloud Shell
+
+1. **Create a Google Cloud service account**
+```bash
+gcloud iam service-accounts create github-deployer \
+  --display-name="GitHub Actions Deploy to GKE"
+```
+
+2. **Grant it permissions**
+```bash
+PROJECT_ID=$(gcloud config get-value project)
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:github-deployer@$PROJECT_ID.iam.gserviceaccount.com" \
+  --role="roles/container.admin"
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:github-deployer@$PROJECT_ID.iam.gserviceaccount.com" \
+  --role="roles/storage.admin"
+```
+3. **Create a JSON key**
+```bash
+gcloud iam service-accounts keys create key.json \
+  --iam-account=github-deployer@$PROJECT_ID.iam.gserviceaccount.com
+```
+Save the file key.json.
+
+4. **Add the key to GitHub secrets**
+
+**GitHub** → **Repository Settings** → **Secrets and variables** → **Actions → New secret**
+
+
+Name: GCP_SA_KEY
+Value: (paste entire contents of key.json)
+Then delete key.json locally.
+
+5. **Add GitHub Actions workflow**
+
+These are the steps I did manually, but they could also be done using Terraform (Infrastructure as Code).
 
 When the GitHub Actions pipeline runs the **Deploy job** to GKE, it automatically:
 
