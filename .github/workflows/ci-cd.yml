@@ -102,11 +102,11 @@ jobs:
           docker push $IMAGE_TAG
 
   deploy:
-    name: Deploy to GKE via Helm
+    name: Deploy to GKE
     runs-on: ubuntu-latest
     needs: docker
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # Authenticate to GCP
       - name: Authenticate to GCP
@@ -127,128 +127,44 @@ jobs:
         run: |
           gcloud container clusters get-credentials devopsproject-cluster-1 --zone us-central1
 
-      # Install Helm
-      - name: Install Helm
-        uses: azure/setup-helm@v3
-        with:
-          version: 'latest'
-
-      # Render Helm templates to verify they're valid
-      - name: Render Helm templates
-        run: |
-          IMAGE_SHA="${{ needs.docker.outputs.image-sha }}"
-          echo "Rendering templates with image tag: $IMAGE_SHA"
-          if [ -z "$IMAGE_SHA" ]; then
-            echo "ERROR: Image SHA is empty!"
-            exit 1
-          fi
-          echo "=== Rendered Templates ==="
-          helm template flask-app ./flask-app \
-            --namespace default \
-            --set image.tag="$IMAGE_SHA" \
-            --debug
-          echo ""
-      
-      # Deploy via Helm with dynamic image tag
+      # Deploy with dynamic image tag
       - name: Deploy to GKE
         run: |
           IMAGE_SHA="${{ needs.docker.outputs.image-sha }}"
           echo "Deploying with image tag: $IMAGE_SHA"
           
-          # First, try a dry-run to catch validation errors
-          echo "=== Dry-run validation ==="
-          helm template flask-app ./flask-app --set image.tag="$IMAGE_SHA" > /tmp/helm-rendered.yaml
-          if [ ! -s /tmp/helm-rendered.yaml ]; then
-            echo "ERROR: Helm template produced no output!"
-            exit 1
-          fi
-          echo "Rendered YAML size: $(wc -l < /tmp/helm-rendered.yaml) lines"
-          
-          # Validate with kubectl dry-run
-          if ! kubectl apply --dry-run=server -f /tmp/helm-rendered.yaml; then
-            echo "ERROR: Dry-run validation failed!"
-            echo "This means the resources would be rejected by Kubernetes."
-            echo "Rendered YAML:"
-            cat /tmp/helm-rendered.yaml
-            exit 1
-          fi
-          echo "Dry-run passed!"
-          echo ""
-          
-          # Now actually deploy
-          echo "=== Deploying with Helm ==="
-          if ! helm upgrade --install flask-app ./flask-app \
-            --namespace default \
-            --set image.tag="$IMAGE_SHA" \
-            --atomic \
-            --wait \
-            --timeout 5m; then
-            echo "ERROR: Helm deployment failed!"
-            echo "Checking what was created..."
-            kubectl get all -n default
+          if [ -z "$IMAGE_SHA" ]; then
+            echo "ERROR: Image SHA is empty!"
             exit 1
           fi
           
-          # Verify resources were actually created
-          echo "=== Verifying resources were created ==="
-          sleep 2  # Give Kubernetes a moment to create resources
-          if ! kubectl get deployment flask-app-deployment -n default &>/dev/null; then
-            echo "ERROR: Deployment was not created after Helm reported success!"
-            echo "This indicates resources were rejected by Kubernetes admission controllers."
-            echo "Checking recent events..."
-            kubectl get events -n default --sort-by='.lastTimestamp' | tail -20
-            exit 1
-          fi
-          echo "Deployment created successfully!"
+          # Replace the placeholder with the actual image tag
+          echo "=== Updating deployment with image tag ==="
+          sed "s/IMAGE_TAG_PLACEHOLDER/$IMAGE_SHA/g" k8s/deployment.yaml > /tmp/deployment.yaml
+          
+          echo "=== Applying deployment ==="
+          kubectl apply -f /tmp/deployment.yaml
+          
+          echo "=== Applying service ==="
+          kubectl apply -f k8s/service.yaml
+          
+          echo "=== Waiting for deployment to be ready ==="
+          kubectl rollout status deployment/flask-app-deployment -n default --timeout=5m
+          
+          echo "=== Deployment successful! ==="
       
-      # Verify deployment and check pods
+      # Verify deployment
       - name: Verify deployment
         run: |
-          echo "=== Helm Releases ==="
-          helm list -n default
+          echo "=== Deployment Details ==="
+          kubectl get deployment flask-app-deployment -n default
           echo ""
-          echo "=== Helm Release History ==="
-          helm history flask-app -n default
+          echo "=== Image being used ==="
+          kubectl get deployment flask-app-deployment -n default -o jsonpath='{.spec.template.spec.containers[0].image}' && echo ""
           echo ""
-          echo "=== Helm Release Values ==="
-          helm get values flask-app -n default
+          echo "=== Pods ==="
+          kubectl get pods -n default -l app=flask-app -o custom-columns=NAME:.metadata.name,IMAGE:.spec.containers[0].image,STATUS:.status.phase
           echo ""
-          echo "=== All Resources Created by Helm (from release) ==="
-          helm get manifest flask-app -n default || echo "No manifest found"
-          echo ""
-          echo "=== All Deployments ==="
-          kubectl get deployments -n default
-          echo ""
-          echo "=== All Resources in default namespace ==="
-          kubectl get all -n default
-          echo ""
-          echo "=== Checking for deployment with different names ==="
-          kubectl get deployments -n default --show-labels || echo "No deployments found"
-          echo ""
-          echo "=== Checking for failed/blocked resources ==="
-          kubectl get events -n default --field-selector type=Warning --sort-by='.lastTimestamp' | tail -30 || echo "No warning events"
-          echo ""
-          echo "=== Recent events (all types) ==="
-          kubectl get events -n default --sort-by='.lastTimestamp' | tail -30
-          echo ""
-          echo "=== Helm-managed Deployment Details ==="
-          DEPLOYMENT_NAME="flask-app-deployment"
-          if kubectl get deployment $DEPLOYMENT_NAME -n default &>/dev/null; then
-            echo "Found Helm deployment: $DEPLOYMENT_NAME"
-            echo "Image being used:"
-            kubectl get deployment $DEPLOYMENT_NAME -n default -o jsonpath='{.spec.template.spec.containers[0].image}' && echo ""
-            echo ""
-            echo "=== Pods managed by Helm ==="
-            kubectl get pods -n default -l app=flask-app -o custom-columns=NAME:.metadata.name,IMAGE:.spec.containers[0].image,STATUS:.status.phase
-            echo ""
-            echo "=== Deployment Annotations ==="
-            kubectl get deployment $DEPLOYMENT_NAME -n default -o jsonpath='{.spec.template.metadata.annotations}' | jq .
-          else
-            echo "WARNING: Helm deployment '$DEPLOYMENT_NAME' not found!"
-            echo "Checking Helm status for errors..."
-            helm status flask-app -n default
-            echo ""
-            echo "=== Trying to manually create deployment to see validation errors ==="
-            helm template flask-app ./flask-app --set image.tag="${{ needs.docker.outputs.image-sha }}" | kubectl apply --dry-run=client -f - || echo "Validation failed"
-          fi
+          echo "=== Service ==="
+          kubectl get service devops-project-svc -n default
           echo ""

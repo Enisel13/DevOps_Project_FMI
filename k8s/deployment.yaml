@@ -4,6 +4,11 @@ metadata:
   name: flask-app-deployment
 spec:
   replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: flask-app
@@ -11,11 +16,21 @@ spec:
     metadata:
       labels:
         app: flask-app
+      annotations:
+        image.tag: "IMAGE_TAG_PLACEHOLDER"
+        checksum/image: "IMAGE_TAG_PLACEHOLDER"
     spec:
       containers:
         - name: flask-app
-          image: eniselkunch/devops-project:latest
+          image: eniselkunch/devops-project:IMAGE_TAG_PLACEHOLDER
           imagePullPolicy: Always
           ports:
             - containerPort: 5001
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
 
