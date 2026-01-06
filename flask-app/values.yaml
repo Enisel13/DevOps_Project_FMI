@@ -1,4 +1,5 @@
 replicaCount: 2
+fullnameOverride: flask-app-deployment
 
 image:
   repository: eniselkunch/devops-project

@@ -46,7 +46,6 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Selector labels
 */}}
 {{- define "flask-app.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "flask-app.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+app: flask-app
 {{- end }}
 

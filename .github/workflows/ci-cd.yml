@@ -145,10 +145,28 @@ jobs:
       # Verify deployment and check pods
       - name: Verify deployment
         run: |
-          echo "Checking deployment status..."
+          echo "=== Helm Releases ==="
+          helm list -n default
+          echo ""
+          echo "=== All Deployments ==="
           kubectl get deployments -n default
-          echo "Checking pods..."
-          kubectl get pods -n default -l app=flask-app
-          echo "Checking pod images..."
-          kubectl get pods -n default -l app=flask-app -o jsonpath='{.items[*].spec.containers[0].image}'
+          echo ""
+          echo "=== Helm-managed Deployment Details ==="
+          DEPLOYMENT_NAME="flask-app-deployment"
+          if kubectl get deployment $DEPLOYMENT_NAME -n default &>/dev/null; then
+            echo "Found Helm deployment: $DEPLOYMENT_NAME"
+            echo "Image being used:"
+            kubectl get deployment $DEPLOYMENT_NAME -n default -o jsonpath='{.spec.template.spec.containers[0].image}' && echo ""
+            echo ""
+            echo "=== Pods managed by Helm ==="
+            kubectl get pods -n default -l app=flask-app -o custom-columns=NAME:.metadata.name,IMAGE:.spec.containers[0].image,STATUS:.status.phase
+            echo ""
+            echo "=== Deployment Annotations ==="
+            kubectl get deployment $DEPLOYMENT_NAME -n default -o jsonpath='{.spec.template.metadata.annotations}' | jq .
+          else
+            echo "WARNING: Helm deployment '$DEPLOYMENT_NAME' not found!"
+            echo "This might mean Helm didn't deploy or there's a naming issue."
+            echo "Checking all flask-app related resources..."
+            kubectl get all -n default | grep flask
+          fi
           echo ""
