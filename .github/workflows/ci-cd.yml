@@ -136,9 +136,16 @@ jobs:
       # Deploy via Helm with dynamic image tag
       - name: Deploy to GKE
         run: |
+          IMAGE_SHA="${{ needs.docker.outputs.image-sha }}"
+          echo "Deploying with image tag: $IMAGE_SHA"
+          if [ -z "$IMAGE_SHA" ]; then
+            echo "ERROR: Image SHA is empty!"
+            exit 1
+          fi
           helm upgrade --install flask-app ./flask-app \
             --namespace default \
-            --set image.tag="${{ needs.docker.outputs.image-sha }}" \
+            --set image.tag="$IMAGE_SHA" \
+            --debug \
             --wait \
             --timeout 5m
       
@@ -148,8 +155,17 @@ jobs:
           echo "=== Helm Releases ==="
           helm list -n default
           echo ""
+          echo "=== All Resources Created by Helm ==="
+          helm get manifest flask-app -n default
+          echo ""
           echo "=== All Deployments ==="
           kubectl get deployments -n default
+          echo ""
+          echo "=== All Resources in default namespace ==="
+          kubectl get all -n default
+          echo ""
+          echo "=== Checking for deployment with different names ==="
+          kubectl get deployments -n default --show-labels
           echo ""
           echo "=== Helm-managed Deployment Details ==="
           DEPLOYMENT_NAME="flask-app-deployment"
@@ -165,8 +181,10 @@ jobs:
             kubectl get deployment $DEPLOYMENT_NAME -n default -o jsonpath='{.spec.template.metadata.annotations}' | jq .
           else
             echo "WARNING: Helm deployment '$DEPLOYMENT_NAME' not found!"
-            echo "This might mean Helm didn't deploy or there's a naming issue."
-            echo "Checking all flask-app related resources..."
-            kubectl get all -n default | grep flask
+            echo "Checking Helm status for errors..."
+            helm status flask-app -n default
+            echo ""
+            echo "Checking for any deployment issues..."
+            kubectl get events -n default --sort-by='.lastTimestamp' | tail -20
           fi
           echo ""

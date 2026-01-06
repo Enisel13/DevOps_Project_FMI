@@ -26,15 +26,15 @@ spec:
     spec:
       containers:
         - name: flask-app
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.containerPort }}
           resources:
             requests:
-              memory: "64Mi"
-              cpu: "50m"
+              memory: "512Mi"
+              cpu: "500m"
             limits:
-              memory: "128Mi"
-              cpu: "100m"
+              memory: "1Gi"
+              cpu: "1000m"
 
