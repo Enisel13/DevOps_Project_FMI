@@ -157,12 +157,21 @@ jobs:
           
           # First, try a dry-run to catch validation errors
           echo "=== Dry-run validation ==="
-          helm template flask-app ./flask-app --set image.tag="$IMAGE_SHA" | \
-            kubectl apply --dry-run=server -f - || {
-              echo "ERROR: Dry-run validation failed!"
-              echo "This means the resources would be rejected by Kubernetes."
-              exit 1
-            }
+          helm template flask-app ./flask-app --set image.tag="$IMAGE_SHA" > /tmp/helm-rendered.yaml
+          if [ ! -s /tmp/helm-rendered.yaml ]; then
+            echo "ERROR: Helm template produced no output!"
+            exit 1
+          fi
+          echo "Rendered YAML size: $(wc -l < /tmp/helm-rendered.yaml) lines"
+          
+          # Validate with kubectl dry-run
+          if ! kubectl apply --dry-run=server -f /tmp/helm-rendered.yaml; then
+            echo "ERROR: Dry-run validation failed!"
+            echo "This means the resources would be rejected by Kubernetes."
+            echo "Rendered YAML:"
+            cat /tmp/helm-rendered.yaml
+            exit 1
+          fi
           echo "Dry-run passed!"
           echo ""
           
@@ -182,9 +191,12 @@ jobs:
           
           # Verify resources were actually created
           echo "=== Verifying resources were created ==="
+          sleep 2  # Give Kubernetes a moment to create resources
           if ! kubectl get deployment flask-app-deployment -n default &>/dev/null; then
             echo "ERROR: Deployment was not created after Helm reported success!"
             echo "This indicates resources were rejected by Kubernetes admission controllers."
+            echo "Checking recent events..."
+            kubectl get events -n default --sort-by='.lastTimestamp' | tail -20
             exit 1
           fi
           echo "Deployment created successfully!"
