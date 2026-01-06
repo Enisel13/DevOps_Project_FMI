@@ -139,4 +139,16 @@ jobs:
           helm upgrade --install flask-app ./flask-app \
             --namespace default \
             --set image.tag="${{ needs.docker.outputs.image-sha }}" \
-            --wait
+            --wait \
+            --timeout 5m
+      
+      # Verify deployment and check pods
+      - name: Verify deployment
+        run: |
+          echo "Checking deployment status..."
+          kubectl get deployments -n default
+          echo "Checking pods..."
+          kubectl get pods -n default -l app=flask-app
+          echo "Checking pod images..."
+          kubectl get pods -n default -l app=flask-app -o jsonpath='{.items[*].spec.containers[0].image}'
+          echo ""
