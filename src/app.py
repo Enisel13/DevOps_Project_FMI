@@ -51,7 +51,7 @@ HEALTH_HTML = """
     </style>
 </head>
 <body>
-    <div class="status">OK Super</div>
+    <div class="status">OK Great</div>
     <a href="/">← Back to Home</a>
 </body>
 </html>
