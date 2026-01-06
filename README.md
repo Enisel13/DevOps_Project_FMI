@@ -170,7 +170,7 @@ This project demonstrates a T-shaped DevOps approach:
     - Deep dive: Security scanning with Bandit integrated into the pipeline
 
 
-### Deploy and Verify on GKE (Public Cloud)
+### Deploy and Verify on GKE (Public Cloud) ##
 
 This project supports automatic deployment to a GKE cluster from GitHub Actions using a Google Cloud service account JSON key.
 Created manually GKE Kubernetes cluster from the UI аnd made sure that I have gcloud CLI installed locally or Cloud Shell
